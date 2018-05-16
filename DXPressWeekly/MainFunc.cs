@@ -4,11 +4,14 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Reflection;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
+[assembly: AssemblyVersion("0.1.*")]
 
 namespace DXPressWeekly
 {
@@ -37,7 +40,7 @@ namespace DXPressWeekly
             eACCESS_TOKEN = WorkWeChat.GetAccessToken(Environment.GetEnvironmentVariable("WorkWeChatCorpID"), Environment.GetEnvironmentVariable("WorkWeChatCorpSECRET"));
             log.Info("Get WorkWeChat AccessToken Successfully.");
 
-            WorkWeChat.Send(eACCESS_TOKEN, $"大夏通讯社一周统计\n{DateTime.Now.AddDays(-6).ToShortDateString()} ~ {DateTime.Now.ToShortDateString()}");
+            WorkWeChat.Send(eACCESS_TOKEN, $"大夏通讯社一周统计 Beta\n{DateTime.Now.AddDays(-6).ToShortDateString()} ~ {DateTime.Now.ToShortDateString()}\nVersion. {Assembly.GetExecutingAssembly().GetName().Version}");
             log.Info("Head message successfully.");
 
             SendApprovalData();

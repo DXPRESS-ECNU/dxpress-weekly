@@ -24,7 +24,9 @@ namespace DXPressWeekly
                 (HttpWebRequest) WebRequest.Create(url + (postDataStr == "" ? "" : "?") + postDataStr);
             request.Method = "GET";
             request.ContentType = "text/html;charset=UTF-8";
-
+#if DEBUG
+            MainFunc.Log.Verbose(request.RequestUri.AbsoluteUri);
+#endif
             HttpWebResponse response = (HttpWebResponse) request.GetResponse();
             Stream myResponseStream = response.GetResponseStream();
             StreamReader myStreamReader = new StreamReader(myResponseStream);
@@ -48,7 +50,8 @@ namespace DXPressWeekly
             httpWebRequest.Method = "POST";
             httpWebRequest.Accept = "application/json; charset=utf-8";
 #if DEBUG
-            MainFunc.Log.Verbose(httpWebRequest.Address.AbsoluteUri);
+            MainFunc.Log.Verbose(url);
+            MainFunc.Log.Verbose(json);
 #endif
             using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
             {
