@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Data;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using System.Net;
@@ -28,60 +32,55 @@ namespace DXPressWeekly
             Log = log;
             log.Info($"C# Timer trigger function executed at: {DateTime.Now}");
 
-            if (GetWeChatAccessToken())
-                log.Info("Get WeChat AccessToken Successfully.");
-            else
-                log.Error("Error When Get WeChat AccessToken.");
+            wACCESS_TOKEN = WeChat.GetAccessToken();
+            log.Info("Get WeChat AccessToken Successfully.");
+            eACCESS_TOKEN = WorkWeChat.GetAccessToken(Environment.GetEnvironmentVariable("WorkWeChatCorpID"), Environment.GetEnvironmentVariable("WorkWeChatCorpSECRET"));
+            log.Info("Get WorkWeChat AccessToken Successfully.");
 
-            if (GetWorkWeChatAccessToken())
-                log.Info("Get WorkWeChat AccessToken Successfully.");
-            else
-                log.Error("Error When Get WorkWeChat AccessToken.");
+            WorkWeChat.Send(eACCESS_TOKEN, $"大夏通讯社一周统计\n{DateTime.Now.AddDays(-6).ToShortDateString()} ~ {DateTime.Now.ToShortDateString()}");
+            log.Info("Head message successfully.");
 
-            if (WorkWeChat.Send(eACCESS_TOKEN, $"Test Message. Send at {DateTime.Now}"))
-                log.Info("Test message successfully.");
-            else
-                log.Error("Test Message Failed.");
+            SendApprovalData();
         }
 
-        /// <summary>
-        /// Connect the server to get wACCESS_TOKEN
-        /// </summary>
-        private static bool GetWeChatAccessToken()
+        public static void SendApprovalData()
         {
-            string backjson = Restapi.HttpGet("https://api.weixin.qq.com/cgi-bin/token",
-                $"grant_type=client_credential&appid={Environment.GetEnvironmentVariable("WeChatAPPID")}&secret={Environment.GetEnvironmentVariable("WeChatAPPSECRET")}");
-            JObject rjson = JObject.Parse(backjson);
-            string st = (string) rjson["access_token"];
-            if (st != "")
+            List<WorkWeChat.ApprovalData> list = WorkWeChat.GetApprovalData(Environment.GetEnvironmentVariable("WorkWeChatCorpID"),
+                Environment.GetEnvironmentVariable("WorkWechatApprovalSecret"), 7);
+            string sendStr = string.Empty;
+            sendStr += "审批统计\n\n";
+            sendStr += $"共有 {list.Count} 条申请项\n";
+            // Count Approval
+            var countSpName = from sp in list
+                orderby sp.spname descending 
+                group sp by sp.spname
+                into g
+                select new {g.Key, count = g.Count() };
+            foreach (var item in countSpName)
             {
-                wACCESS_TOKEN = st;
-                return true;
+                sendStr += item.Key + " 共 " + item.count;
+                //var countPassSp = from sp in list
+                //    where sp.spname == item.Key && sp.sp_status == WorkWeChat.ApprovalStatus.已通过
+                //    select list.Count();
+                int countPassSp = list.Count(w => w.spname == item.Key && w.sp_status == WorkWeChat.ApprovalStatus.已通过);
+                sendStr += " 已通过 " + countPassSp + "\n";
             }
-            else
+
+            sendStr += "\n分部门统计\n";
+            var countSpOrg = from sp in list
+                orderby sp.spname descending ,sp.apply_org descending 
+                group sp by new {sp.spname, sp.apply_org}
+                into g
+                select new {g.Key.spname, g.Key.apply_org, count = g.Count()};
+            foreach (var item in countSpOrg)
             {
-                return false;
+                sendStr += $"{item.spname} {item.apply_org} {item.count} 人次\n";
             }
+
+            WorkWeChat.Send(eACCESS_TOKEN, sendStr);
+            Log.Info("Finish SendApprovalData.");
         }
 
-        /// <summary>
-        /// Connect the server to get eACCESS_TOKEN
-        /// </summary>
-        private static bool GetWorkWeChatAccessToken()
-        {
-            string backjson = Restapi.HttpGet("https://qyapi.weixin.qq.com/cgi-bin/gettoken",
-                $"corpid={Environment.GetEnvironmentVariable("WorkWeChatCorpID")}&corpsecret={Environment.GetEnvironmentVariable("WorkWeChatCorpSECRET")}");
-            JObject rjson = JObject.Parse(backjson);
-            string st = (string) rjson["access_token"];
-            if (st != "")
-            {
-                eACCESS_TOKEN = st;
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
+        
     }
 }

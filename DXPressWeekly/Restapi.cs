@@ -43,28 +43,13 @@ namespace DXPressWeekly
         /// <returns></returns>
         public static string HttpPost(string url, string json)
         {
-            HttpWebRequest httpWebRequest = null;
-            if (url.StartsWith("https", StringComparison.OrdinalIgnoreCase))
-            {
-                httpWebRequest = WebRequest.Create(url) as HttpWebRequest;
-                ServicePointManager.ServerCertificateValidationCallback = CheckValidationResult;
-                httpWebRequest.ProtocolVersion = HttpVersion.Version11;
-
-                // 这里设置了协议类型。
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                httpWebRequest.KeepAlive = false;
-                ServicePointManager.CheckCertificateRevocationList = true;
-                ServicePointManager.DefaultConnectionLimit = 100;
-                ServicePointManager.Expect100Continue = false;
-            }
-            else
-            {
-                httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
-            }
+            HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
             httpWebRequest.ContentType = "application/json; charset=utf-8";
             httpWebRequest.Method = "POST";
             httpWebRequest.Accept = "application/json; charset=utf-8";
-
+#if DEBUG
+            MainFunc.Log.Verbose(httpWebRequest.Address.AbsoluteUri);
+#endif
             using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
             {
                 streamWriter.Write(json);
@@ -78,11 +63,6 @@ namespace DXPressWeekly
                     return result;
                 }
             }
-        }
-
-        private static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {
-            return true;
         }
     }
 }
