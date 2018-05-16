@@ -48,10 +48,6 @@ namespace DXPressWeekly
                 {"text", new JObject {{"content", message}}}
             };
             string url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + accessToken;
-#if DEBUG
-            MainFunc.Log.Verbose(url);
-            MainFunc.Log.Verbose(json.ToString());
-#endif
             string returnjson =
                 Restapi.HttpPost(url,
                     json.ToString());
