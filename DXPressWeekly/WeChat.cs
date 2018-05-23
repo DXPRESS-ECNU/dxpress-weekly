@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Senparc.Weixin.MP.AdvancedAPIs;
 
 namespace DXPressWeekly
 {
@@ -26,6 +27,12 @@ namespace DXPressWeekly
             {
                 throw new Exception((string) rjson["errmsg"]);
             }
+        }
+
+        public static void GetReadData()
+        {
+            // TODO Add WeChat Read Data Analysis
+
         }
     }
 }

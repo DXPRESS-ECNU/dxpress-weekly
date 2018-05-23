@@ -1,4 +1,4 @@
-using System;
+Ôªøusing System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -40,7 +40,7 @@ namespace DXPressWeekly
             eACCESS_TOKEN = WorkWeChat.GetAccessToken(Environment.GetEnvironmentVariable("WorkWeChatCorpID"), Environment.GetEnvironmentVariable("WorkWeChatCorpSECRET"));
             log.Info("Get WorkWeChat AccessToken Successfully.");
 
-            WorkWeChat.Send(eACCESS_TOKEN, $"¥ÛœƒÕ®—∂…Á“ª÷‹Õ≥º∆ Beta\n{DateTime.Now.AddDays(-6).ToShortDateString()} ~ {DateTime.Now.ToShortDateString()}\nVersion. {Assembly.GetExecutingAssembly().GetName().Version}");
+            WorkWeChat.Send(eACCESS_TOKEN, $"Â§ßÂ§èÈÄöËÆØÁ§æ‰∏ÄÂë®ÁªüËÆ° Beta\n{DateTime.Now.AddDays(-6).ToShortDateString()} ~ {DateTime.Now.ToShortDateString()}\n\nVersion. {Assembly.GetExecutingAssembly().GetName().Version}");
             log.Info("Head message successfully.");
 
             SendApprovalData();
@@ -51,8 +51,8 @@ namespace DXPressWeekly
             List<WorkWeChat.ApprovalData> list = WorkWeChat.GetApprovalData(Environment.GetEnvironmentVariable("WorkWeChatCorpID"),
                 Environment.GetEnvironmentVariable("WorkWechatApprovalSecret"), 7);
             string sendStr = string.Empty;
-            sendStr += "…Û≈˙Õ≥º∆\n\n";
-            sendStr += $"π≤”– {list.Count} Ãı…Í«ÎœÓ\n";
+            sendStr += "ÂÆ°ÊâπÁªüËÆ°\n\n";
+            sendStr += $"ÂÖ±Êúâ {list.Count} Êù°Áî≥ËØ∑È°π\n";
             // Count Approval
             var countSpName = from sp in list
                 orderby sp.spname descending 
@@ -61,24 +61,39 @@ namespace DXPressWeekly
                 select new {g.Key, count = g.Count() };
             foreach (var item in countSpName)
             {
-                sendStr += item.Key + " π≤ " + item.count;
+                sendStr += item.Key + " ÂÖ± " + item.count;
                 //var countPassSp = from sp in list
-                //    where sp.spname == item.Key && sp.sp_status == WorkWeChat.ApprovalStatus.“—Õ®π˝
+                //    where sp.spname == item.Key && sp.sp_status == WorkWeChat.ApprovalStatus.Â∑≤ÈÄöËøá
                 //    select list.Count();
-                int countPassSp = list.Count(w => w.spname == item.Key && w.sp_status == WorkWeChat.ApprovalStatus.“—Õ®π˝);
-                sendStr += " “—Õ®π˝ " + countPassSp + "\n";
+                int countPassSp = list.Count(w => w.spname == item.Key && w.sp_status == WorkWeChat.ApprovalStatus.Â∑≤ÈÄöËøá);
+                sendStr += " Â∑≤ÈÄöËøá " + countPassSp + "\n";
+                var deptcount = from sp in list
+                    where sp.spname == item.Key
+                    orderby sp.apply_org descending
+                    group sp by sp.apply_org
+                    into g
+                    select new {g.Key, count = g.Count()};
+                foreach (var deptitem in deptcount)
+                {
+                    string deptname = deptitem.Key;
+                    string depttotal = deptitem.count.ToString();
+                    string deptpass = list.Count(i =>
+                        i.spname == item.Key && i.apply_org == deptitem.Key &&
+                        i.sp_status == WorkWeChat.ApprovalStatus.Â∑≤ÈÄöËøá).ToString();
+                    sendStr += $"-{deptname} {depttotal}|{deptpass}";
+                }
             }
 
-            sendStr += "\n∑÷≤ø√≈Õ≥º∆\n";
-            var countSpOrg = from sp in list
-                orderby sp.spname descending ,sp.apply_org descending 
-                group sp by new {sp.spname, sp.apply_org}
-                into g
-                select new {g.Key.spname, g.Key.apply_org, count = g.Count()};
-            foreach (var item in countSpOrg)
-            {
-                sendStr += $"{item.spname} {item.apply_org} {item.count} »À¥Œ\n";
-            }
+            //sendStr += "\nÂàÜÈÉ®Èó®ÁªüËÆ°\n";
+            //var countSpOrg = from sp in list
+            //    orderby sp.spname descending ,sp.apply_org descending 
+            //    group sp by new {sp.spname, sp.apply_org}
+            //    into g
+            //    select new {g.Key.spname, g.Key.apply_org, count = g.Count()};
+            //foreach (var item in countSpOrg)
+            //{
+            //    sendStr += $"{item.spname} {item.apply_org} {item.count} ‰∫∫Ê¨°\n";
+            //}
 
             WorkWeChat.Send(eACCESS_TOKEN, sendStr);
             Log.Info("Finish SendApprovalData.");
