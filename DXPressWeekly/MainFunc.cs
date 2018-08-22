@@ -20,12 +20,12 @@ namespace DXPressWeekly
         /// <summary>
         /// The wACCESS_TOKEN using to connect the wechat server.
         /// </summary>
-        private static string wACCESS_TOKEN;
+        private static string _wAccessToken;
 
         /// <summary>
         /// The eACCESS_TOKEN using to connect the work-wechat server.
         /// </summary>
-        private static string eACCESS_TOKEN;
+        private static string _eAccessToken;
 
         public static TraceWriter Log;
 
@@ -35,15 +35,23 @@ namespace DXPressWeekly
             Log = log;
             log.Info($"C# Timer trigger function executed at: {DateTime.Now}");
 
-            wACCESS_TOKEN = WeChat.GetAccessToken();
+            _wAccessToken = WeChat.GetAccessToken();
             log.Info("Get WeChat AccessToken Successfully.");
-            eACCESS_TOKEN = WorkWeChat.GetAccessToken(Environment.GetEnvironmentVariable("WorkWeChatCorpID"), Environment.GetEnvironmentVariable("WorkWeChatCorpSECRET"));
+            _eAccessToken = WorkWeChat.GetAccessToken(Environment.GetEnvironmentVariable("WorkWeChatCorpID"), Environment.GetEnvironmentVariable("WorkWeChatCorpSECRET"));
             log.Info("Get WorkWeChat AccessToken Successfully.");
 
-            WorkWeChat.Send(eACCESS_TOKEN, $"大夏通讯社一周统计 Beta\n{DateTime.Now.AddDays(-6).ToShortDateString()} ~ {DateTime.Now.ToShortDateString()}\n\nVersion. {Assembly.GetExecutingAssembly().GetName().Version}");
+            WorkWeChat.Send(_eAccessToken, $"大夏通讯社一周统计 Beta\n{DateTime.Now.AddDays(-6).ToShortDateString()} ~ {DateTime.Now.ToShortDateString()}\n{IsDebug()}\nVersion. {Assembly.GetExecutingAssembly().GetName().Version}");
             log.Info("Head message successfully.");
 
             SendApprovalData();
+        }
+
+        private static string IsDebug()
+        {
+#if DEBUG
+            return "DEBUG MODE";
+#endif
+            return "";
         }
 
         public static void SendApprovalData()
@@ -51,7 +59,7 @@ namespace DXPressWeekly
             List<WorkWeChat.ApprovalData> list = WorkWeChat.GetApprovalData(Environment.GetEnvironmentVariable("WorkWeChatCorpID"),
                 Environment.GetEnvironmentVariable("WorkWechatApprovalSecret"), 7);
             string sendStr = string.Empty;
-            sendStr += "审批统计\n\n";
+            sendStr += "审批统计\n";
             sendStr += $"共有 {list.Count} 条申请项\n";
             // Count Approval
             var countSpName = from sp in list
@@ -61,7 +69,7 @@ namespace DXPressWeekly
                 select new {g.Key, count = g.Count() };
             foreach (var item in countSpName)
             {
-                sendStr += item.Key + " 共 " + item.count;
+                sendStr += "\n" + item.Key + " 共 " + item.count;
                 //var countPassSp = from sp in list
                 //    where sp.spname == item.Key && sp.sp_status == WorkWeChat.ApprovalStatus.已通过
                 //    select list.Count();
@@ -80,7 +88,7 @@ namespace DXPressWeekly
                     string deptpass = list.Count(i =>
                         i.spname == item.Key && i.apply_org == deptitem.Key &&
                         i.sp_status == WorkWeChat.ApprovalStatus.已通过).ToString();
-                    sendStr += $"-{deptname} {depttotal}|{deptpass}";
+                    sendStr += $"- {deptname} 共{depttotal}过{deptpass}\n";
                 }
             }
 
@@ -95,7 +103,7 @@ namespace DXPressWeekly
             //    sendStr += $"{item.spname} {item.apply_org} {item.count} 人次\n";
             //}
 
-            WorkWeChat.Send(eACCESS_TOKEN, sendStr);
+            WorkWeChat.Send(_eAccessToken, sendStr);
             Log.Info("Finish SendApprovalData.");
         }
 
