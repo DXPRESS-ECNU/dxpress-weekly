@@ -80,14 +80,6 @@ namespace DXPressWeekly
         public static List<ApprovalData> GetApprovalData(string copid, string secret, int timelength = 7)
         {
             string ak = GetAccessToken(copid, secret);
-            //DataTable data = new DataTable();
-            //data.Columns.Add("spname");
-            //data.Columns.Add("sp_num");
-            //data.Columns.Add("apply_name");
-            //data.Columns.Add("apply_user_id");
-            //data.Columns.Add("apply_org");
-            //data.Columns.Add("sp_status");
-            //data.Columns.Add("apply_time");
             List<ApprovalData> list = new List<ApprovalData>();
 
             string url = @"https://qyapi.weixin.qq.com/cgi-bin/corp/getapprovaldata?access_token=" + ak;
@@ -108,23 +100,16 @@ namespace DXPressWeekly
             foreach (var item in itemsArray.Children())
             {
                 JObject itemJObject = JObject.Parse(item.ToString());
-                //DataRow row = data.NewRow();
-                //row["spname"] = (string) itemJObject["spname"];
-                //row["apply_name"] = (string) itemJObject["apply_name"];
-                //row["apply_user_id"] = (string) itemJObject["apply_user_id"];
-                //row["apply_org"] = (string) itemJObject["apply_org"];
-                //row["sp_status"] = (ApprovalStatus) (int) itemJObject["sp_status"];
-                //row["sp_num"] = (int) itemJObject["sp_num"];
-                //row["apply_time"] = (int) itemJObject["apply_time"];
-                //data.Rows.Add(row);
-                ApprovalData data = new ApprovalData();
-                data.apply_name = (string)itemJObject["apply_name"];
-                data.apply_org = (string)itemJObject["apply_org"];
-                data.apply_time = (int)itemJObject["apply_time"];
-                data.apply_user_id = (string)itemJObject["apply_user_id"];
-                data.sp_num = (ulong)itemJObject["sp_num"];
-                data.sp_status = (ApprovalStatus)(int)itemJObject["sp_status"];
-                data.spname = (string)itemJObject["spname"];
+                ApprovalData data = new ApprovalData
+                {
+                    apply_name = (string)itemJObject["apply_name"],
+                    apply_org = (string)itemJObject["apply_org"],
+                    apply_time = (int)itemJObject["apply_time"],
+                    apply_user_id = (string)itemJObject["apply_user_id"],
+                    sp_num = (ulong)itemJObject["sp_num"],
+                    sp_status = (ApprovalStatus)(int)itemJObject["sp_status"],
+                    spname = (string)itemJObject["spname"]
+                };
                 list.Add(data);
             }
             //return data;
