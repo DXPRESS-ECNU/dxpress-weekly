@@ -85,8 +85,8 @@ namespace DXPressWeekly
             string url = @"https://qyapi.weixin.qq.com/cgi-bin/corp/getapprovaldata?access_token=" + _accessToken;
             string requestJson = new JObject
             {
-                {"starttime", (DateTime.Now.AddDays(1 - timelength).Date.ToUniversalTime().Ticks - 621355968000000000) / 10000000},
-                {"endtime", (DateTime.Now.ToUniversalTime().Ticks - 621355968000000000) / 10000000}
+                {"starttime", (DateTime.Now.AddDays(-timelength).Date.ToUniversalTime().Ticks - 621355968000000000) / 10000000},
+                {"endtime", (DateTime.Now.AddDays(-1).ToUniversalTime().Ticks - 621355968000000000) / 10000000}
             }.ToString();
             string returnjson =
                 Restapi.HttpPost(url,
