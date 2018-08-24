@@ -51,7 +51,7 @@ namespace DXPressWeekly
             httpWebRequest.Accept = "application/json; charset=utf-8";
 #if DEBUG
             MainFunc.Log.Verbose(url);
-            MainFunc.Log.Verbose(json);
+            MainFunc.Log.Verbose(postJson);
 #endif
             using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
             {
