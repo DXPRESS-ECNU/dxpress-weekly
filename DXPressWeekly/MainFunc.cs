@@ -32,10 +32,11 @@ namespace DXPressWeekly
             _workWeChat = new WorkWeChat(Environment.GetEnvironmentVariable("WorkWeChatCorpID"), Environment.GetEnvironmentVariable("WorkWeChatCorpSECRET"));
             log.Info("Get WorkWeChat AccessToken Successfully.");
 
-            _workWeChat.Send($"大夏通讯社一周统计 Beta\n{DateTime.Now.AddDays(-6).ToShortDateString()} ~ {DateTime.Now.ToShortDateString()}\n{IsDebug()}\nVersion. {Assembly.GetExecutingAssembly().GetName().Version}");
+            _workWeChat.Send($"大夏通讯社一周统计 Beta\n{DateTime.Now.AddDays(-7).ToShortDateString()} ~ {DateTime.Now.AddDays(-1).ToShortDateString()}\n{IsDebug()}\nVersion. {Assembly.GetExecutingAssembly().GetName().Version}");
             log.Info("Head message successfully.");
 
             SendApprovalData();
+            SendUserAnalysis();
         }
 
         private static string IsDebug()
@@ -49,8 +50,7 @@ namespace DXPressWeekly
         public static void SendApprovalData()
         {
             List<WorkWeChat.ApprovalData> list = _workWeChat.GetApprovalData(7);
-            string sendStr = string.Empty;
-            sendStr += "审批统计\n";
+            string sendStr = "审批统计\n";
             sendStr += $"共有 {list.Count} 条申请项\n";
             // Count Approval
             var countSpName = from sp in list
@@ -85,6 +85,16 @@ namespace DXPressWeekly
             Log.Info("Finish SendApprovalData.");
         }
 
-        
+        private static void SendUserAnalysis()
+        {
+            _weChat.GetUserData(out List<WeChat.UserSummary> userSummaries, out List<WeChat.UserCumulate> userCumulates, 7);
+            string sendStr = "订阅统计\n";
+            var totalSubscriber = userCumulates.OrderByDescending(i => i.ref_date).Select(i => i.cumulate_user).First();
+            sendStr += $"\n当前订阅人数： {totalSubscriber.ToString()} 。\n";
+            var newSubscriber = userSummaries.Where(i => i.user_source == 0).Select(i => i.new_user).Sum();
+            var cancelSubscriber = userSummaries.Where(i => i.user_source == 0).Select(i => i.cancel_user).Sum();
+            sendStr += $"本周新增 {newSubscriber} 人，取消 {cancelSubscriber} 人。";
+            _workWeChat.Send(sendStr);
+        }
     }
 }
