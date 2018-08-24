@@ -16,7 +16,7 @@ namespace DXPressWeekly
             _accessToken = GetAccessToken(corpid, secret);
         }
         /// <summary>
-        /// Connect the server to get eACCESS_TOKEN
+        /// Connect the server to get ACCESS_TOKEN
         /// </summary>
         private string GetAccessToken(string corpid, string secret)
         {
