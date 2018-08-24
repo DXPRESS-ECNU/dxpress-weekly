@@ -10,10 +10,15 @@ namespace DXPressWeekly
 {
     class WorkWeChat
     {
+        private readonly string _accessToken;
+        public WorkWeChat(string corpid, string secret)
+        {
+            _accessToken = GetAccessToken(corpid, secret);
+        }
         /// <summary>
         /// Connect the server to get eACCESS_TOKEN
         /// </summary>
-        public static string GetAccessToken(string corpid, string secret)
+        private string GetAccessToken(string corpid, string secret)
         {
             string backjson = Restapi.HttpGet("https://qyapi.weixin.qq.com/cgi-bin/gettoken",
                 $"corpid={corpid}&corpsecret={secret}");
@@ -23,18 +28,14 @@ namespace DXPressWeekly
             {
                 return st;
             }
-            else
-            {
-                throw new Exception((string) rjson["errmsg"]);
-            }
+            throw new Exception((string) rjson["errmsg"]);
         }
 
         /// <summary>
         /// Send Message to Work WeChat
         /// </summary>
-        /// <param name="accessToken">the accesstoken of app to send message</param>
         /// <param name="message">the message body</param>
-        public static void Send(string accessToken, string message)
+        public void Send(string message)
         {
             string touser = "";
 #if DEBUG
@@ -47,7 +48,7 @@ namespace DXPressWeekly
                 {"agentid", Environment.GetEnvironmentVariable("WorkWeChatAppId")},
                 {"text", new JObject {{"content", message}}}
             };
-            string url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + accessToken;
+            string url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + _accessToken;
             string returnjson =
                 Restapi.HttpPost(url,
                     json.ToString());
@@ -77,12 +78,11 @@ namespace DXPressWeekly
             public ApprovalStatus sp_status;
             public int apply_time;
         }
-        public static List<ApprovalData> GetApprovalData(string copid, string secret, int timelength = 7)
+        public List<ApprovalData> GetApprovalData(int timelength = 7)
         {
-            string ak = GetAccessToken(copid, secret);
             List<ApprovalData> list = new List<ApprovalData>();
 
-            string url = @"https://qyapi.weixin.qq.com/cgi-bin/corp/getapprovaldata?access_token=" + ak;
+            string url = @"https://qyapi.weixin.qq.com/cgi-bin/corp/getapprovaldata?access_token=" + _accessToken;
             string requestJson = new JObject
             {
                 {"starttime", (DateTime.Now.AddDays(1 - timelength).Date.ToUniversalTime().Ticks - 621355968000000000) / 10000000},
