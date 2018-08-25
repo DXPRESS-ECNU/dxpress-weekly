@@ -11,7 +11,7 @@ using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-[assembly: AssemblyVersion("0.1.*")]
+[assembly: AssemblyVersion("0.2.*")]
 
 namespace DXPressWeekly
 {
@@ -47,7 +47,7 @@ namespace DXPressWeekly
 
         public static void SendApprovalData()
         {
-            List<WorkWeChat.ApprovalData> list = _workWeChat.GetApprovalData(7);
+            List<WorkWeChat.ApprovalData> list = _workWeChat.GetApprovalData();
             string sendStr = "审批统计\n";
             sendStr += $"共有 {list.Count} 条申请项\n";
             // Count Approval
@@ -85,13 +85,44 @@ namespace DXPressWeekly
 
         private static void SendUserAnalysis()
         {
-            _weChat.GetUserData(out List<WeChat.UserSummary> userSummaries, out List<WeChat.UserCumulate> userCumulates, 7);
+            _weChat.GetUserData(out List<WeChat.UserSummary> userSummaries, out List<WeChat.UserCumulate> userCumulates);
             string sendStr = "订阅统计\n";
             var totalSubscriber = userCumulates.OrderByDescending(i => i.ref_date).Select(i => i.cumulate_user).First();
             sendStr += $"\n当前订阅人数： {totalSubscriber.ToString()} 。\n";
             var newSubscriber = userSummaries.Where(i => i.user_source == 0).Select(i => i.new_user).Sum();
             var cancelSubscriber = userSummaries.Where(i => i.user_source == 0).Select(i => i.cancel_user).Sum();
             sendStr += $"本周新增 {newSubscriber} 人，取消 {cancelSubscriber} 人。";
+            _workWeChat.Send(sendStr);
+        }
+
+        private static void SendReadAnalysis()
+        {
+            _weChat.GetReadData(out List<WeChat.ReadNum> readNums, out List<WeChat.ArticleReadNum> articleReadNums);
+            string sendStr = "阅读统计\n";
+
+            sendStr += "\nI. 本周每日阅读统计\n";
+            readNums = readNums.OrderBy(i => i.ref_date).ToList();
+            foreach (var readNum in readNums)
+            {
+                sendStr += readNum.ref_date.ToString("MM/dd") + " " + readNum.int_page_read_count + "\n";
+            }
+
+            sendStr += "\n上周推送阅读总量\n";
+            articleReadNums = articleReadNums.OrderBy(i => i.ref_date).ThenBy(i => i.title).ToList();
+            List<DateTime> dateList = articleReadNums.GroupBy(i => i.ref_date).Select(i => i.Key).ToList();
+            foreach (var date in dateList)
+            {
+                sendStr += date.ToString("MM/dd") + " :\n";
+                List<string> articleList = articleReadNums.Where(i => i.ref_date == date).Select(i => i.title).ToList();
+                foreach (var title in articleList)
+                {
+                    sendStr += title + " ";
+                    List<WeChat.ArticleReadNum.DailyReadTotal> readTotal = articleReadNums.Where(i => i.title == title).Select(i => i.ReadTotals).First();
+                    int readmax = readTotal.Select(i => i.int_page_read_count).Max();
+                    sendStr += readmax + "\n";
+                }
+            }
+
             _workWeChat.Send(sendStr);
         }
     }

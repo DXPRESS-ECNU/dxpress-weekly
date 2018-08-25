@@ -31,10 +31,83 @@ namespace DXPressWeekly
             throw new Exception((string) rjson["errmsg"]);
         }
 
-        public void GetReadData()
+        public class ReadNum
         {
-            // TODO Add WeChat Read Data Analysis
+            public DateTime ref_date;
+            public int int_page_read_count;
+        }
+        public class ArticleReadNum
+        {
+            public DateTime ref_date;
+            public string title;
+            public List<DailyReadTotal> ReadTotals;
+            public class DailyReadTotal
+            {
+                public DateTime stat_date;
+                public int int_page_read_count;
+            }
+        }
 
+        public void GetReadData(out List<ReadNum> readNums, out List<ArticleReadNum> articleReadNums)
+        {
+            CultureInfo provider = CultureInfo.InvariantCulture;
+            readNums = new List<ReadNum>();
+            string urlgetuserread = $"https://api.weixin.qq.com/datacube/getuserread?access_token={_accessToken}";
+            for (int i = 1; i < 8; i++)
+            {
+                string date = DateTime.Now.AddDays(-i).ToString("yyyy-MM-dd");
+                JObject posJObject = new JObject
+                {
+                    {"begin_date",date },
+                    {"end_date",date }
+                };
+                string outJson = Restapi.HttpPost(urlgetuserread, posJObject.ToString());
+                JObject outJObject = JObject.Parse(outJson);
+                JArray dataJArray = JArray.FromObject(outJObject["list"]);
+                JObject mainJObject = JObject.FromObject(dataJArray.First);
+                ReadNum readNum = new ReadNum
+                {
+                    ref_date = DateTime.ParseExact((string)mainJObject["ref_date"], "yyyy-MM-dd", provider),
+                    int_page_read_count = (int)mainJObject["int_page_read_count"]
+                };
+                readNums.Add(readNum);
+            }
+
+            articleReadNums = new List<ArticleReadNum>();
+            string urlgetarticletotal = $"https://api.weixin.qq.com/datacube/getarticletotal?access_token={_accessToken}";
+            for (int i = 1; i < 8; i++)
+            {
+                string date = DateTime.Now.AddDays(-i).ToString("yyyy-MM-dd");
+                JObject posJObject = new JObject
+                {
+                    {"begin_date",date },
+                    {"end_date",date }
+                };
+                string outJson = Restapi.HttpPost(urlgetarticletotal, posJObject.ToString());
+                JObject outJObject = JObject.Parse(outJson);
+                JArray dataJArray = JArray.FromObject(outJObject["list"]);
+                foreach (var article in dataJArray.Children())
+                {
+                    JObject articleJObject = JObject.FromObject(article);
+                    ArticleReadNum articleReadNum = new ArticleReadNum
+                    {
+                        ref_date = DateTime.ParseExact((string) articleJObject["ref_date"], "yyyy-MM-dd", provider),
+                        title = (string) articleJObject["title"]
+                    };
+                    JArray dailyreadArray = JArray.FromObject(articleJObject["details"]);
+                    foreach (var dailydata in dailyreadArray.Children())
+                    {
+                        JObject dailyreadJObject = JObject.FromObject(dailydata);
+                        ArticleReadNum.DailyReadTotal dailyReadTotal = new ArticleReadNum.DailyReadTotal
+                        {
+                            stat_date = DateTime.ParseExact((string)dailyreadJObject["stat_date"], "yyyy-MM-dd", provider),
+                            int_page_read_count = (int)dailyreadJObject["int_page_read_count"]
+                        };
+                        articleReadNum.ReadTotals.Add(dailyReadTotal);
+                    }
+                    articleReadNums.Add(articleReadNum);
+                }
+            }
         }
 
         public class UserSummary
@@ -50,14 +123,14 @@ namespace DXPressWeekly
             public int cumulate_user;
         }
 
-        public void GetUserData(out List<UserSummary> userSummaries, out List<UserCumulate> userCumulates, int timeLength = 7)
+        public void GetUserData(out List<UserSummary> userSummaries, out List<UserCumulate> userCumulates)
         {
             userSummaries = new List<UserSummary>();
             userCumulates = new List<UserCumulate>();
             CultureInfo provider = CultureInfo.InvariantCulture;
 
             string beginDate = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
-            string endDate = DateTime.Now.AddDays(-timeLength).ToString("yyyy-MM-dd");
+            string endDate = DateTime.Now.AddDays(-7).ToString("yyyy-MM-dd");
 
             JObject posJObject = new JObject
             {

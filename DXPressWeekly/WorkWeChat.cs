@@ -75,14 +75,14 @@ namespace DXPressWeekly
             public ApprovalStatus sp_status;
             public int apply_time;
         }
-        public List<ApprovalData> GetApprovalData(int timelength = 7)
+        public List<ApprovalData> GetApprovalData()
         {
             List<ApprovalData> list = new List<ApprovalData>();
 
             string url = @"https://qyapi.weixin.qq.com/cgi-bin/corp/getapprovaldata?access_token=" + _accessToken;
             string requestJson = new JObject
             {
-                {"starttime", (DateTime.Now.AddDays(-timelength).Date.ToUniversalTime().Ticks - 621355968000000000) / 10000000},
+                {"starttime", (DateTime.Now.AddDays(-7).Date.ToUniversalTime().Ticks - 621355968000000000) / 10000000},
                 {"endtime", (DateTime.Now.AddDays(-1).ToUniversalTime().Ticks - 621355968000000000) / 10000000}
             }.ToString();
             string returnjson =
