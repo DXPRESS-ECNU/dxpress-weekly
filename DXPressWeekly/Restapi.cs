@@ -34,7 +34,10 @@ namespace DXPressWeekly
             string retString = myStreamReader.ReadToEnd();
             myStreamReader.Close();
             myResponseStream.Close();
-
+            if (MainFunc.IsDebug)
+            {
+                MainFunc.Log.Verbose(retString);
+            }
             return retString;
         }
 
@@ -65,6 +68,10 @@ namespace DXPressWeekly
                 using (var streamReader = new StreamReader(httpResponse.GetResponseStream() ?? throw new NullReferenceException()))
                 {
                     var result = streamReader.ReadToEnd();
+                    if (MainFunc.IsDebug)
+                    {
+                        MainFunc.Log.Verbose(result);
+                    }
                     return result;
                 }
             }

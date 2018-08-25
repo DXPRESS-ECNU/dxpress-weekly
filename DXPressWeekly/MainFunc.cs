@@ -35,7 +35,7 @@ namespace DXPressWeekly
 
             _weChat = new WeChat(Environment.GetEnvironmentVariable("WeChatAPPID"), Environment.GetEnvironmentVariable("WeChatAPPSECRET"));
             log.Info("Get WeChat AccessToken Successfully.");
-            _workWeChat = new WorkWeChat(Environment.GetEnvironmentVariable("WorkWeChatCorpID"), Environment.GetEnvironmentVariable("WorkWeChatCorpSECRET"));
+            _workWeChat = new WorkWeChat(Environment.GetEnvironmentVariable("WorkWeChatCorpID"), Environment.GetEnvironmentVariable("WorkWeChatCorpSECRET"), Environment.GetEnvironmentVariable("WorkWechatApprovalSecret"));
             log.Info("Get WorkWeChat AccessToken Successfully.");
 
             _workWeChat.Send($"大夏通讯社一周统计 Beta\n{DateTime.Now.AddDays(-7).ToShortDateString()} ~ {DateTime.Now.AddDays(-1).ToShortDateString()}\n{(IsDebug ? "DEBUG MODE":"")}\nVersion. {Assembly.GetExecutingAssembly().GetName().Version}");
@@ -43,6 +43,7 @@ namespace DXPressWeekly
 
             SendApprovalData();
             SendUserAnalysis();
+            SendReadAnalysis();
         }
 
         public static void SendApprovalData()
@@ -88,10 +89,10 @@ namespace DXPressWeekly
             _weChat.GetUserData(out List<WeChat.UserSummary> userSummaries, out List<WeChat.UserCumulate> userCumulates);
             string sendStr = "订阅统计\n";
             var totalSubscriber = userCumulates.OrderByDescending(i => i.ref_date).Select(i => i.cumulate_user).First();
-            sendStr += $"\n当前订阅人数： {totalSubscriber.ToString()} 。\n";
+            sendStr += $"当前订阅人数： {totalSubscriber.ToString()}\n";
             var newSubscriber = userSummaries.Where(i => i.user_source == 0).Select(i => i.new_user).Sum();
             var cancelSubscriber = userSummaries.Where(i => i.user_source == 0).Select(i => i.cancel_user).Sum();
-            sendStr += $"本周新增 {newSubscriber} 人，取消 {cancelSubscriber} 人。";
+            sendStr += $"本周新增 {newSubscriber} 人，取消 {cancelSubscriber} 人";
             _workWeChat.Send(sendStr);
         }
 
@@ -100,14 +101,14 @@ namespace DXPressWeekly
             _weChat.GetReadData(out List<WeChat.ReadNum> readNums, out List<WeChat.ArticleReadNum> articleReadNums);
             string sendStr = "阅读统计\n";
 
-            sendStr += "\nI. 本周每日阅读统计\n";
+            sendStr += "I. 本周每日阅读统计\n";
             readNums = readNums.OrderBy(i => i.ref_date).ToList();
             foreach (var readNum in readNums)
             {
                 sendStr += readNum.ref_date.ToString("MM/dd") + " " + readNum.int_page_read_count + "\n";
             }
 
-            sendStr += "\n上周推送阅读总量\n";
+            sendStr += "II. 上周推送阅读总量\n";
             articleReadNums = articleReadNums.OrderBy(i => i.ref_date).ThenBy(i => i.title).ToList();
             List<DateTime> dateList = articleReadNums.GroupBy(i => i.ref_date).Select(i => i.Key).ToList();
             foreach (var date in dateList)

@@ -64,6 +64,10 @@ namespace DXPressWeekly
                 string outJson = Restapi.HttpPost(urlgetuserread, posJObject.ToString());
                 JObject outJObject = JObject.Parse(outJson);
                 JArray dataJArray = JArray.FromObject(outJObject["list"]);
+                if (dataJArray.Count == 0)
+                {
+                    continue;
+                }
                 JObject mainJObject = JObject.FromObject(dataJArray.First);
                 ReadNum readNum = new ReadNum
                 {
@@ -92,7 +96,8 @@ namespace DXPressWeekly
                     ArticleReadNum articleReadNum = new ArticleReadNum
                     {
                         ref_date = DateTime.ParseExact((string) articleJObject["ref_date"], "yyyy-MM-dd", provider),
-                        title = (string) articleJObject["title"]
+                        title = (string) articleJObject["title"],
+                        ReadTotals = new List<ArticleReadNum.DailyReadTotal>()
                     };
                     JArray dailyreadArray = JArray.FromObject(articleJObject["details"]);
                     foreach (var dailydata in dailyreadArray.Children())
@@ -101,7 +106,7 @@ namespace DXPressWeekly
                         ArticleReadNum.DailyReadTotal dailyReadTotal = new ArticleReadNum.DailyReadTotal
                         {
                             stat_date = DateTime.ParseExact((string)dailyreadJObject["stat_date"], "yyyy-MM-dd", provider),
-                            int_page_read_count = (int)dailyreadJObject["int_page_read_count"]
+                            int_page_read_count = (int)dailyreadJObject["int_page_read_count"],
                         };
                         articleReadNum.ReadTotals.Add(dailyReadTotal);
                     }
@@ -129,8 +134,8 @@ namespace DXPressWeekly
             userCumulates = new List<UserCumulate>();
             CultureInfo provider = CultureInfo.InvariantCulture;
 
-            string beginDate = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
-            string endDate = DateTime.Now.AddDays(-7).ToString("yyyy-MM-dd");
+            string beginDate = DateTime.Now.AddDays(-7).ToString("yyyy-MM-dd");
+            string endDate = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd");
 
             JObject posJObject = new JObject
             {

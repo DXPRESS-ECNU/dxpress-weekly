@@ -11,9 +11,11 @@ namespace DXPressWeekly
     class WorkWeChat
     {
         private readonly string _accessToken;
-        public WorkWeChat(string corpid, string secret)
+        private readonly string _approvalAccessToken;
+        public WorkWeChat(string corpid, string corpSecret, string approvalSecret)
         {
-            _accessToken = GetAccessToken(corpid, secret);
+            _accessToken = GetAccessToken(corpid, corpSecret);
+            _approvalAccessToken = GetAccessToken(corpid, approvalSecret);
         }
         /// <summary>
         /// Connect the server to get ACCESS_TOKEN
@@ -79,7 +81,7 @@ namespace DXPressWeekly
         {
             List<ApprovalData> list = new List<ApprovalData>();
 
-            string url = @"https://qyapi.weixin.qq.com/cgi-bin/corp/getapprovaldata?access_token=" + _accessToken;
+            string url = @"https://qyapi.weixin.qq.com/cgi-bin/corp/getapprovaldata?access_token=" + _approvalAccessToken;
             string requestJson = new JObject
             {
                 {"starttime", (DateTime.Now.AddDays(-7).Date.ToUniversalTime().Ticks - 621355968000000000) / 10000000},
