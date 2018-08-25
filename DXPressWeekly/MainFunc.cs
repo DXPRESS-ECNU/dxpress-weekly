@@ -20,6 +20,7 @@ namespace DXPressWeekly
         private static WeChat _weChat;
         private static WorkWeChat _workWeChat;
         public static TraceWriter Log;
+        public static bool IsDebug = true;
 
         [FunctionName("MainFunc")]
         public static void Run([TimerTrigger("0 0 20 * * SUN")] TimerInfo myTimer, TraceWriter log)
@@ -27,24 +28,21 @@ namespace DXPressWeekly
             Log = log;
             log.Info($"C# Timer trigger function executed at: {DateTime.Now}");
 
+            if (Environment.GetEnvironmentVariable("DEBUGMODE") == "0")
+            {
+                IsDebug = false;
+            }
+
             _weChat = new WeChat(Environment.GetEnvironmentVariable("WeChatAPPID"), Environment.GetEnvironmentVariable("WeChatAPPSECRET"));
             log.Info("Get WeChat AccessToken Successfully.");
             _workWeChat = new WorkWeChat(Environment.GetEnvironmentVariable("WorkWeChatCorpID"), Environment.GetEnvironmentVariable("WorkWeChatCorpSECRET"));
             log.Info("Get WorkWeChat AccessToken Successfully.");
 
-            _workWeChat.Send($"大夏通讯社一周统计 Beta\n{DateTime.Now.AddDays(-7).ToShortDateString()} ~ {DateTime.Now.AddDays(-1).ToShortDateString()}\n{IsDebug()}\nVersion. {Assembly.GetExecutingAssembly().GetName().Version}");
+            _workWeChat.Send($"大夏通讯社一周统计 Beta\n{DateTime.Now.AddDays(-7).ToShortDateString()} ~ {DateTime.Now.AddDays(-1).ToShortDateString()}\n{(IsDebug ? "DEBUG MODE":"")}\nVersion. {Assembly.GetExecutingAssembly().GetName().Version}");
             log.Info("Head message successfully.");
 
             SendApprovalData();
             SendUserAnalysis();
-        }
-
-        private static string IsDebug()
-        {
-#if DEBUG
-            return "DEBUG MODE";
-#endif
-            return "";
         }
 
         public static void SendApprovalData()

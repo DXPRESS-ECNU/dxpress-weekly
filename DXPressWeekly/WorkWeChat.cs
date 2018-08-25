@@ -37,10 +37,7 @@ namespace DXPressWeekly
         /// <param name="message">the message body</param>
         public void Send(string message)
         {
-            string touser = "";
-#if DEBUG
-            touser = Environment.GetEnvironmentVariable("DebugSend");
-#endif
+            string touser = MainFunc.IsDebug ? Environment.GetEnvironmentVariable("DebugSend") : "";
             JObject json = new JObject
             {
                 {"touser", touser == "" ? "@all" : touser},
