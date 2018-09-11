@@ -1,10 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 
 namespace DXPressWeekly
 {
@@ -20,7 +17,7 @@ namespace DXPressWeekly
         /// </summary>
         public string GetAccessToken(string appid, string secret)
         {
-            string backjson = Restapi.HttpGet("https://api.weixin.qq.com/cgi-bin/token",
+            string backjson = Requests.HttpGet("https://api.weixin.qq.com/cgi-bin/token",
                 $"grant_type=client_credential&appid={appid}&secret={secret}");
             JObject rjson = JObject.Parse(backjson);
             string st = (string)rjson["access_token"];
@@ -61,7 +58,7 @@ namespace DXPressWeekly
                     {"begin_date",date },
                     {"end_date",date }
                 };
-                string outJson = Restapi.HttpPost(urlgetuserread, posJObject.ToString());
+                string outJson = Requests.HttpPost(urlgetuserread, posJObject.ToString());
                 JObject outJObject = JObject.Parse(outJson);
                 JArray dataJArray = JArray.FromObject(outJObject["list"]);
                 if (dataJArray.Count == 0)
@@ -81,13 +78,13 @@ namespace DXPressWeekly
             string urlgetarticletotal = $"https://api.weixin.qq.com/datacube/getarticletotal?access_token={_accessToken}";
             for (int i = 1; i < 8; i++)
             {
-                string date = DateTime.Now.AddDays(-i).ToString("yyyy-MM-dd");
+                string date = DateTime.Now.AddDays(-i-7).ToString("yyyy-MM-dd");
                 JObject posJObject = new JObject
                 {
                     {"begin_date",date },
                     {"end_date",date }
                 };
-                string outJson = Restapi.HttpPost(urlgetarticletotal, posJObject.ToString());
+                string outJson = Requests.HttpPost(urlgetarticletotal, posJObject.ToString());
                 JObject outJObject = JObject.Parse(outJson);
                 JArray dataJArray = JArray.FromObject(outJObject["list"]);
                 foreach (var article in dataJArray.Children())
@@ -145,7 +142,7 @@ namespace DXPressWeekly
             string urlGetusersummary = $"https://api.weixin.qq.com/datacube/getusersummary?access_token={_accessToken}";
             string urlGetusercumulate = $"https://api.weixin.qq.com/datacube/getusercumulate?access_token={_accessToken}";
 
-            string outGetusersummary = Restapi.HttpPost(urlGetusersummary, posJObject.ToString());
+            string outGetusersummary = Requests.HttpPost(urlGetusersummary, posJObject.ToString());
             JObject outGetusersummaryJObject = JObject.Parse(outGetusersummary);
             JArray usersummaryJArray = JArray.FromObject(outGetusersummaryJObject["list"]);
             foreach (var usersummary in usersummaryJArray.Children())
@@ -161,7 +158,7 @@ namespace DXPressWeekly
                 userSummaries.Add(userSummary);
             }
 
-            string outGetusercumulate = Restapi.HttpPost(urlGetusercumulate, posJObject.ToString());
+            string outGetusercumulate = Requests.HttpPost(urlGetusercumulate, posJObject.ToString());
             JObject outGetusercumulateJObject = JObject.Parse(outGetusercumulate);
             JArray usercumulateJArray = JArray.FromObject(outGetusercumulateJObject["list"]);
             foreach (var usercumulate in usercumulateJArray.Children())

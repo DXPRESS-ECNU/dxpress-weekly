@@ -1,10 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 
 namespace DXPressWeekly
 {
@@ -22,7 +18,7 @@ namespace DXPressWeekly
         /// </summary>
         private string GetAccessToken(string corpid, string secret)
         {
-            string backjson = Restapi.HttpGet("https://qyapi.weixin.qq.com/cgi-bin/gettoken",
+            string backjson = Requests.HttpGet("https://qyapi.weixin.qq.com/cgi-bin/gettoken",
                 $"corpid={corpid}&corpsecret={secret}");
             JObject rjson = JObject.Parse(backjson);
             string st = (string) rjson["access_token"];
@@ -49,7 +45,7 @@ namespace DXPressWeekly
             };
             string url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + _accessToken;
             string returnjson =
-                Restapi.HttpPost(url,
+                Requests.HttpPost(url,
                     json.ToString());
             JObject rj = JObject.Parse(returnjson);
             if ((string) rj["errcode"] != "0")
@@ -88,7 +84,7 @@ namespace DXPressWeekly
                 {"endtime", (DateTime.Now.AddDays(-1).ToUniversalTime().Ticks - 621355968000000000) / 10000000}
             }.ToString();
             string returnjson =
-                Restapi.HttpPost(url,
+                Requests.HttpPost(url,
                     requestJson);
             JObject returnJObject = JObject.Parse(returnjson);
             if ((int)returnJObject["errcode"] != 0)
@@ -111,7 +107,6 @@ namespace DXPressWeekly
                 };
                 list.Add(data);
             }
-            //return data;
             return list;
         }
     }
