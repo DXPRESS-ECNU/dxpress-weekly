@@ -85,8 +85,8 @@ namespace DXPressWeekly
             string sendStr = "订阅统计\n";
             var totalSubscriber = userCumulates.OrderByDescending(i => i.ref_date).Select(i => i.cumulate_user).First();
             sendStr += $"当前订阅人数： {totalSubscriber.ToString()}\n";
-            var newSubscriber = userSummaries.Where(i => i.user_source == 0).Select(i => i.new_user).Sum();
-            var cancelSubscriber = userSummaries.Where(i => i.user_source == 0).Select(i => i.cancel_user).Sum();
+            var newSubscriber = userSummaries.Select(i => i.new_user).Sum();
+            var cancelSubscriber = userSummaries.Select(i => i.cancel_user).Sum();
             sendStr += $"本周新增 {newSubscriber} 人，取消 {cancelSubscriber} 人";
             _workWeChat.Send(sendStr);
         }
