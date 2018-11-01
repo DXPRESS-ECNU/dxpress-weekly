@@ -6,7 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Reflection;
 
-[assembly: AssemblyVersion("1.0.*")]
+[assembly: AssemblyVersion("1.1.*")]
 
 namespace DXPressWeekly
 {
@@ -33,7 +33,7 @@ namespace DXPressWeekly
             _workWeChat = new WorkWeChat(Environment.GetEnvironmentVariable("WorkWeChatCorpID"), Environment.GetEnvironmentVariable("WorkWeChatCorpSECRET"), Environment.GetEnvironmentVariable("WorkWechatApprovalSecret"));
             log.Info("Get WorkWeChat AccessToken Successfully.");
 
-            _workWeChat.Send($"大夏通讯社一周统计\n{DateTime.Now.AddDays(-7).ToShortDateString()} ~ {DateTime.Now.AddDays(-1).ToShortDateString()}\n{(IsDebug ? "DEBUG MODE":"")}\nVersion. {Assembly.GetExecutingAssembly().GetName().Version}");
+            _workWeChat.Send($"大夏通讯社一周统计\n{DateTime.Now.AddDays(-7).ToShortDateString()} ~ {DateTime.Now.AddDays(-1).ToShortDateString()}{(IsDebug ? "\nDEBUG MODE":"")}");
             log.Info("Head message successfully.");
 
             SendApprovalData();
@@ -93,27 +93,35 @@ namespace DXPressWeekly
 
         private static void SendReadAnalysis()
         {
-            _weChat.GetReadData(out List<WeChat.ReadNum> readNums, out List<WeChat.ArticleReadNum> articleReadNums);
-            string sendStr = "阅读统计\n";
-
-            sendStr += "I. 本周每日阅读统计\n";
+            // _weChat.GetReadData(out List<WeChat.ReadNum> readNums, out List<WeChat.ArticleReadNum> articleReadNums);
+            string sendStr = "阅读统计";
+            List<WeChat.ReadNum> readNums = _weChat.GetUserRead(-7, -1);
+            List<WeChat.ArticleReadNum> thisWeekArticleReadNums = _weChat.GetArticleRead(-7, -1);
+            sendStr += "\nI. 本周每日阅读统计";
             readNums = readNums.OrderBy(i => i.ref_date).ToList();
             foreach (var readNum in readNums)
             {
-                sendStr += readNum.ref_date.ToString("MM/dd") + " " + readNum.int_page_read_count + "\n";
+                sendStr += "\n" + readNum.ref_date.ToString("MM/dd") + " " + readNum.int_page_read_count;
+                var dailyPublished = thisWeekArticleReadNums.Where(a => a.ref_date.Date == readNum.ref_date.Date)
+                    .Select(a => a.title).ToArray();
+                foreach (var articleName in dailyPublished)
+                {
+                    sendStr += "\n- " + articleName;
+                }
             }
 
-            sendStr += "II. 上周推送七日阅读总量";
-            articleReadNums = articleReadNums.OrderBy(i => i.ref_date).ThenBy(i => i.title).ToList();
-            List<DateTime> dateList = articleReadNums.GroupBy(i => i.ref_date).Select(i => i.Key).ToList();
+            sendStr += "\nII. 上周推送七日阅读总量";
+            List<WeChat.ArticleReadNum> lastWeekArticleReadNums = _weChat.GetArticleRead(-14, -8);
+            lastWeekArticleReadNums = lastWeekArticleReadNums.OrderBy(i => i.ref_date).ThenBy(i => i.title).ToList();
+            List<DateTime> dateList = lastWeekArticleReadNums.GroupBy(i => i.ref_date).Select(i => i.Key).ToList();
             foreach (var date in dateList)
             {
                 sendStr += "\n" + date.ToString("MM/dd") + " :";
-                List<string> articleList = articleReadNums.Where(i => i.ref_date == date).Select(i => i.title).ToList();
+                List<string> articleList = lastWeekArticleReadNums.Where(i => i.ref_date == date).Select(i => i.title).ToList();
                 foreach (var title in articleList)
                 {
                     sendStr += "\n" + title + " ";
-                    List<WeChat.ArticleReadNum.DailyReadTotal> readTotal = articleReadNums.Where(i => i.title == title).Select(i => i.ReadTotals).First();
+                    List<WeChat.ArticleReadNum.DailyReadTotal> readTotal = lastWeekArticleReadNums.Where(i => i.title == title).Select(i => i.ReadTotals).First();
                     int readmax = readTotal.Select(i => i.int_page_read_count).Max();
                     sendStr += readmax;
                 }
