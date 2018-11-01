@@ -94,10 +94,10 @@ namespace DXPressWeekly
         private static void SendReadAnalysis()
         {
             // _weChat.GetReadData(out List<WeChat.ReadNum> readNums, out List<WeChat.ArticleReadNum> articleReadNums);
-            string sendStr = "阅读统计\n";
+            string sendStr = "阅读统计";
             List<WeChat.ReadNum> readNums = _weChat.GetUserRead(-7, -1);
             List<WeChat.ArticleReadNum> thisWeekArticleReadNums = _weChat.GetArticleRead(-7, -1);
-            sendStr += "I. 本周每日阅读统计";
+            sendStr += "\nI. 本周每日阅读统计";
             readNums = readNums.OrderBy(i => i.ref_date).ToList();
             foreach (var readNum in readNums)
             {
@@ -110,7 +110,7 @@ namespace DXPressWeekly
                 }
             }
 
-            sendStr += "II. 上周推送七日阅读总量";
+            sendStr += "\nII. 上周推送七日阅读总量";
             List<WeChat.ArticleReadNum> lastWeekArticleReadNums = _weChat.GetArticleRead(-14, -8);
             lastWeekArticleReadNums = lastWeekArticleReadNums.OrderBy(i => i.ref_date).ThenBy(i => i.title).ToList();
             List<DateTime> dateList = lastWeekArticleReadNums.GroupBy(i => i.ref_date).Select(i => i.Key).ToList();

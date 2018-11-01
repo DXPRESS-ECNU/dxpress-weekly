@@ -117,7 +117,7 @@ namespace DXPressWeekly
             CultureInfo provider = CultureInfo.InvariantCulture;
             List<ReadNum> readNumList = new List<ReadNum>();
             string urlGetUserRead = $"https://api.weixin.qq.com/datacube/getuserread?access_token={_accessToken}";
-            for (int i = endDay; i < beginDay + 1; i++)
+            for (int i = beginDay; i < endDay + 1; i++)
             {
                 string date = DateTime.Now.AddDays(i).ToString("yyyy-MM-dd");
                 JObject posJObject = new JObject
@@ -149,7 +149,7 @@ namespace DXPressWeekly
             CultureInfo provider = CultureInfo.InvariantCulture;
             List<ArticleReadNum> articleReadNums = new List<ArticleReadNum>();
             string urlGetArticleTotal = $"https://api.weixin.qq.com/datacube/getarticletotal?access_token={_accessToken}";
-            for (int i = endDay; i < beginDay + 1; i++)
+            for (int i = beginDay; i < endDay + 1; i++)
             {
                 string date = DateTime.Now.AddDays(i).ToString("yyyy-MM-dd");
                 JObject posJObject = new JObject
