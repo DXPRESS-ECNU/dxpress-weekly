@@ -44,7 +44,7 @@ namespace DXPressWeekly
                 public int int_page_read_count;
             }
         }
-
+        [Obsolete]
         public void GetReadData(out List<ReadNum> readNums, out List<ArticleReadNum> articleReadNums)
         {
             CultureInfo provider = CultureInfo.InvariantCulture;
@@ -110,6 +110,81 @@ namespace DXPressWeekly
                     articleReadNums.Add(articleReadNum);
                 }
             }
+        }
+
+        public List<ReadNum> GetUserRead(int beginDay = -7, int endDay = -1)
+        {
+            CultureInfo provider = CultureInfo.InvariantCulture;
+            List<ReadNum> readNumList = new List<ReadNum>();
+            string urlGetUserRead = $"https://api.weixin.qq.com/datacube/getuserread?access_token={_accessToken}";
+            for (int i = endDay; i < beginDay + 1; i++)
+            {
+                string date = DateTime.Now.AddDays(i).ToString("yyyy-MM-dd");
+                JObject posJObject = new JObject
+                {
+                    {"begin_date",date },
+                    {"end_date",date }
+                };
+                string outJson = Requests.HttpPost(urlGetUserRead, posJObject.ToString());
+                JObject outJObject = JObject.Parse(outJson);
+                JArray dataJArray = JArray.FromObject(outJObject["list"]);
+                if (dataJArray.Count == 0)
+                {
+                    continue;
+                }
+                JObject mainJObject = JObject.FromObject(dataJArray.First);
+                ReadNum readNum = new ReadNum
+                {
+                    ref_date = DateTime.ParseExact((string)mainJObject["ref_date"], "yyyy-MM-dd", provider),
+                    int_page_read_count = (int)mainJObject["int_page_read_count"]
+                };
+                readNumList.Add(readNum);
+            }
+
+            return readNumList;
+        }
+
+        public List<ArticleReadNum> GetArticleRead(int beginDay = -7, int endDay = -1)
+        {
+            CultureInfo provider = CultureInfo.InvariantCulture;
+            List<ArticleReadNum> articleReadNums = new List<ArticleReadNum>();
+            string urlGetArticleTotal = $"https://api.weixin.qq.com/datacube/getarticletotal?access_token={_accessToken}";
+            for (int i = endDay; i < beginDay + 1; i++)
+            {
+                string date = DateTime.Now.AddDays(i).ToString("yyyy-MM-dd");
+                JObject posJObject = new JObject
+                {
+                    {"begin_date",date },
+                    {"end_date",date }
+                };
+                string outJson = Requests.HttpPost(urlGetArticleTotal, posJObject.ToString());
+                JObject outJObject = JObject.Parse(outJson);
+                JArray dataJArray = JArray.FromObject(outJObject["list"]);
+                foreach (var article in dataJArray.Children())
+                {
+                    JObject articleJObject = JObject.FromObject(article);
+                    ArticleReadNum articleReadNum = new ArticleReadNum
+                    {
+                        ref_date = DateTime.ParseExact((string)articleJObject["ref_date"], "yyyy-MM-dd", provider),
+                        title = (string)articleJObject["title"],
+                        ReadTotals = new List<ArticleReadNum.DailyReadTotal>()
+                    };
+                    JArray dailyReadArray = JArray.FromObject(articleJObject["details"]);
+                    foreach (var dailyData in dailyReadArray.Children())
+                    {
+                        JObject dailyReadJObject = JObject.FromObject(dailyData);
+                        ArticleReadNum.DailyReadTotal dailyReadTotal = new ArticleReadNum.DailyReadTotal
+                        {
+                            stat_date = DateTime.ParseExact((string)dailyReadJObject["stat_date"], "yyyy-MM-dd", provider),
+                            int_page_read_count = (int)dailyReadJObject["int_page_read_count"],
+                        };
+                        articleReadNum.ReadTotals.Add(dailyReadTotal);
+                    }
+                    articleReadNums.Add(articleReadNum);
+                }
+            }
+
+            return articleReadNums;
         }
 
         public class UserSummary
