@@ -44,6 +44,10 @@ namespace DXPressWeekly
         public static void SendApprovalData()
         {
             List<WorkWeChat.ApprovalData> list = _workWeChat.GetApprovalData();
+            if (list.Count == 0)
+            {
+                return;
+            }
             string sendStr = "审批统计\n";
             sendStr += $"共有 {list.Count} 条申请项\n";
             // Count Approval
@@ -110,7 +114,7 @@ namespace DXPressWeekly
                 }
             }
 
-            sendStr += "\nII. 上周推送七日阅读总量";
+            sendStr += "\n\nII. 上周推送七日阅读总量";
             List<WeChat.ArticleReadNum> lastWeekArticleReadNums = _weChat.GetArticleRead(-14, -8);
             lastWeekArticleReadNums = lastWeekArticleReadNums.OrderBy(i => i.ref_date).ThenBy(i => i.title).ToList();
             List<DateTime> dateList = lastWeekArticleReadNums.GroupBy(i => i.ref_date).Select(i => i.Key).ToList();
